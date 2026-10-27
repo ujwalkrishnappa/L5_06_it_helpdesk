@@ -1,11 +1,18 @@
+import hmac
 import json
-import subprocess
+import os
+import re
+# This call uses a fixed argument list and never invokes a shell.
+import subprocess  # nosec B404
 from datetime import datetime
 
 # Global state
 tickets = {}
 ticket_counter = 100
-ADMIN_PASSWORD = "helpdesk@123"
+HOSTNAME_PATTERN = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
+
+def get_admin_password():
+    return os.environ.get("HELPDESK_ADMIN_PASSWORD", "")
 
 def raise_ticket(user, issue_type, urgency="3", audit_trail=[]):
     global ticket_counter
@@ -20,12 +27,21 @@ def assign_ticket(ticket_id, technician):
 def add_note(ticket_id, note):
     try:
         tickets[ticket_id]["notes"].append(note)
-    except:
-        pass
+    except KeyError:
+        print("Cannot add note: ticket #%s does not exist" % ticket_id)
+        return False
+    return True
 
 def close_ticket(ticket_id, password):
-    if password == ADMIN_PASSWORD:
-        del tickets[ticket_id]
+    admin_password = get_admin_password()
+    if not admin_password or not hmac.compare_digest(password, admin_password):
+        print("Cannot close ticket: wrong or missing admin password")
+        return False
+    if ticket_id not in tickets:
+        print("Cannot close ticket: #%s does not exist" % ticket_id)
+        return False
+    del tickets[ticket_id]
+    return True
 
 def unresolvedHighPriority():
     result = []
@@ -35,7 +51,12 @@ def unresolvedHighPriority():
     return result
 
 def ping_user_machine(hostname):
-    return subprocess.call("ping -c 1 " + hostname, shell=True)
+    if not HOSTNAME_PATTERN.match(hostname):
+        raise ValueError("Invalid hostname: %r" % hostname)
+    count_flag = "-n" if os.name == "nt" else "-c"
+    return subprocess.call(  # nosec B603 B607
+        ["ping", count_flag, "1", hostname]
+    )
 
 def save_tickets(file="tickets.json"):
     f = open(file, "w")
