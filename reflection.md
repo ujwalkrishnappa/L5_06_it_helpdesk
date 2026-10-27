@@ -1,56 +1,24 @@
-# Reflection
+# Lab 5 Reflection
 
-The provided handout asks for reflection answers but does not print individual
-reflection questions. These four lab-related prompts and answers cover what I
-learned from running the tools and fixing the program.
+## 1. What was the purpose of this lab?
 
-## 1. Which issues were easiest and hardest to fix?
+I used Pylint, Bandit, and Flake8 to examine a Python helpdesk ticket program.
+The tools helped me find code quality, security, and formatting problems.
 
-The easiest fixes were the mechanical ones: changing `== None` to `is None`,
-removing the unused `t2` variable, adding docstrings, and correcting blank
-lines. The tools named the rule and the location, so I could see what to
-change.
+## 2. What important problems did I fix?
 
-The hardest issue was the unsafe ping command. The original code put the
-hostname into a command string and asked the shell to run it. I changed this
-to a list of separate arguments, validated the hostname, and avoided invoking
-a shell. I also had to account for the different ping count options on Windows
-and Unix-like systems. Moving the admin password to an environment variable
-was another important change: the program now needs
-`HELPDESK_ADMIN_PASSWORD` set before an administrator can close a ticket.
+I removed the unsafe shell command and moved the admin password out of the
+source code. I also fixed input validation, error handling, and a shared
+mutable default argument.
 
-## 2. Did the tools report false positives or miss real problems?
+## 3. How did I check that my fixes worked?
 
-Bandit's subprocess checks are cautious pattern warnings. It reports the use
-of `subprocess` even though the final code passes a fixed argument list and
-does not start a shell. I reviewed those calls and used narrowly scoped
-`# nosec` codes to document why the warnings do not apply. The after report
-states that there are no unsuppressed findings and shows the three suppressed
-checks.
+I ran all three analysis tools again and saved their before-and-after reports.
+The final Pylint score was 10/10, while Bandit had no unsuppressed findings and
+Flake8 reported no issues.
 
-The tools did not detect every behavior problem. They did not flag that the
-original program accepted urgency values outside 1-5 or silently ignored a
-failed ticket-close operation. Running the program and checking its behavior
-helped reveal these problems. Static analysis checks code patterns; it does
-not replace testing the program.
+## 4. What did I learn from this lab?
 
-## 3. How would you use static analysis in a normal development workflow?
-
-I would enable Flake8 and Pylint in my editor so style and code-quality issues
-appear while I work. I would run Bandit, Pylint, Flake8, and automated tests
-on each proposed code change in continuous integration (CI). CI could fail
-when security findings remain, formatting checks fail, or the Pylint score
-falls below the team's target. Static analysis should be used with tests and
-code review, because each catches different kinds of problems.
-
-## 4. What improvements did you make to the code?
-
-- **Security:** the ping command no longer uses a shell, and the admin
-  password is read from the environment instead of the current source file.
-- **Reliability:** invalid urgency values are rejected, errors are visible,
-  and the ticket file is closed safely even if writing raises an error.
-- **Readability:** names use `snake_case`, the code has docstrings, and
-  f-strings and PEP 8 spacing make it easier to follow.
-- **Maintainability:** the demo only runs when the file is executed directly.
-  Pylint improved from 5.53/10 to 10.00/10, and the final Flake8 report is
-  empty.
+I learned that static analysis tools can help identify security, quality, and
+style issues, but they do not catch every behavior bug. Testing the program
+and reading its output are also important.
