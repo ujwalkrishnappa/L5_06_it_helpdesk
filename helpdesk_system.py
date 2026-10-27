@@ -17,9 +17,11 @@ HOSTNAME_PATTERN = re.compile(
 tickets = {}
 TICKET_IDS = itertools.count(101)
 
+
 def get_admin_password():
     """Return the admin password configured in the environment."""
     return os.environ.get("HELPDESK_ADMIN_PASSWORD", "")
+
 
 def raise_ticket(user, issue_type, urgency="3", audit_trail=None):
     """Create a ticket with urgency from 1 to 5 and return its id."""
@@ -42,9 +44,11 @@ def raise_ticket(user, issue_type, urgency="3", audit_trail=None):
     audit_trail.append(f"{user} raised #{ticket_id} at {datetime.now()}")
     return ticket_id
 
+
 def assign_ticket(ticket_id, technician):
     """Assign a technician to an existing ticket."""
     tickets[ticket_id]["tech"] = technician
+
 
 def add_note(ticket_id, note):
     """Add a note to a ticket and report if its id does not exist."""
@@ -54,6 +58,7 @@ def add_note(ticket_id, note):
         print(f"Cannot add note: ticket #{ticket_id} does not exist")
         return False
     return True
+
 
 def close_ticket(ticket_id, password):
     """Close a ticket only when the configured admin password is correct."""
@@ -67,6 +72,7 @@ def close_ticket(ticket_id, password):
     del tickets[ticket_id]
     return True
 
+
 def unresolved_high_priority():
     """Return ids for high-priority tickets without an assigned technician."""
     return [
@@ -74,6 +80,7 @@ def unresolved_high_priority():
         for ticket_id, ticket in tickets.items()
         if ticket["priority"] >= HIGH_PRIORITY and ticket["tech"] is None
     ]
+
 
 def ping_user_machine(hostname):
     """Ping a machine once and return the command's exit code."""
@@ -84,10 +91,12 @@ def ping_user_machine(hostname):
         ["ping", count_flag, "1", hostname]
     )
 
+
 def save_tickets(file="tickets.json"):
     """Save all tickets to a JSON file."""
     with open(file, "w", encoding="utf-8") as handle:
         json.dump(tickets, handle)
+
 
 def main():
     """Run the helpdesk ticket demonstration."""
@@ -106,6 +115,7 @@ def main():
     close_ticket(vpn_ticket, get_admin_password())
     save_tickets()
     print("Open tickets:", list(tickets.keys()))
+
 
 if __name__ == "__main__":
     main()
